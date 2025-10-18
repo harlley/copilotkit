@@ -1,19 +1,20 @@
 import {
   CopilotKit,
-  useCopilotReadable,
   useCopilotAction,
+  useCopilotReadable,
 } from "@copilotkit/react-core";
-import { CopilotChat } from "@copilotkit/react-ui";
+import { CopilotSidebar } from "@copilotkit/react-ui";
 import "@copilotkit/react-ui/styles.css";
 import { useState } from "react";
+import styles from "./App.module.css";
 
 function Square({ color = "blue" }) {
   return (
-    <div style={{ backgroundColor: color, width: "100px", height: "100px" }} />
+    <div className={styles.square} style={{ backgroundColor: color }} />
   );
 }
 
-function YourComponent() {
+function Chat() {
   const [color, setColor] = useState("blue");
 
   useCopilotReadable({
@@ -38,7 +39,10 @@ function YourComponent() {
 
   return (
     <>
-      <CopilotChat
+      <CopilotSidebar
+        defaultOpen
+        clickOutsideToClose={false}
+        hitEscapeToClose={false}
         instructions={
           "You are assisting the user as best as you can. Answer in the best way possible given the data you have."
         }
@@ -48,7 +52,7 @@ function YourComponent() {
         }}
         suggestions={[
           {
-            title: "Change background",
+            title: "Change square color",
             message: "Choose a new random background color.",
           },
           {
@@ -57,13 +61,15 @@ function YourComponent() {
           },
         ]}
       />
-      <Square color={color} />
-      <div style={{ marginTop: "20px", display: "flex", gap: "10px", alignItems: "center" }}>
-        <button onClick={() => setColor("red")}>Red</button>
-        <button onClick={() => setColor("blue")}>Blue</button>
-        <button onClick={() => setColor("green")}>Green</button>
-        <div style={{ marginLeft: "20px", fontWeight: "bold" }}>
-          Current color: {color}
+      <div className={styles.container}>
+        <Square color={color} />
+        <div className={styles.buttonContainer}>
+          <button onClick={() => setColor("red")}>Red</button>
+          <button onClick={() => setColor("blue")}>Blue</button>
+          <button onClick={() => setColor("green")}>Green</button>
+          <div className={styles.currentColor}>
+            Current color: {color}
+          </div>
         </div>
       </div>
     </>
@@ -73,7 +79,7 @@ function YourComponent() {
 function App() {
   return (
     <CopilotKit runtimeUrl="/api/copilotkit" agent="agent">
-      <YourComponent />
+      <Chat />
     </CopilotKit>
   );
 }

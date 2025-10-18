@@ -1,0 +1,27 @@
+.container {
+  --square-size: 500px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 20px;
+  margin-left: calc(-448px / 2);
+}
+
+.square {
+  width: var(--square-size);
+  height: var(--square-size);
+}
+
+.buttonContainer {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.currentColor {
+  margin-left: 20px;
+  font-weight: bold;
+}
