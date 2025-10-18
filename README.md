@@ -2,7 +2,7 @@
 
 A didactic project demonstrating how to integrate **CopilotKit** (React) with **LangGraph** (Python) to build an AI-powered interface that reads and controls UI state in real-time.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Architecture](#architecture)
@@ -11,10 +11,9 @@ A didactic project demonstrating how to integrate **CopilotKit** (React) with **
 - [Project Structure](#project-structure)
 - [How It Works](#how-it-works)
 - [Code Walkthrough](#code-walkthrough)
-- [Key Learnings](#key-learnings)
 - [References](#references)
 
-## 🎯 Overview
+## Overview
 
 This project demonstrates a simple but powerful use case: **an AI agent that can read and change a square's color** through natural language conversation.
 
@@ -27,18 +26,18 @@ This project demonstrates a simple but powerful use case: **an AI agent that can
 
 ### Demo Features
 
-- 🎨 Change square color via chat (English or Portuguese)
-- 🔍 Ask about current color - AI always knows the real state
-- 🔘 Manual controls (buttons) - AI stays synchronized
-- 🌍 Multilingual support with automatic translation to HTML color names
+- Change square color via chat (English or other languages)
+- Ask about current color - AI always knows the real state
+- Manual controls (buttons) - AI stays synchronized
+- Multilingual support with automatic translation to HTML color names
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│              Frontend (React) - Port 5173                │
+│              Frontend (React) - Port 5173               │
 │  ┌────────────────────────────────────────────────────┐ │
-│  │  useCopilotReadable  ──→  Sends current state     │ │
+│  │  useCopilotReadable  ──→  Sends current state      │ │
 │  │  - Current color: "blue"                           │ │
 │  └────────────────────────────────────────────────────┘ │
 │  ┌────────────────────────────────────────────────────┐ │
@@ -49,7 +48,7 @@ This project demonstrates a simple but powerful use case: **an AI agent that can
                   │ HTTP/SSE
                   ↓
 ┌─────────────────────────────────────────────────────────┐
-│           BFF (Express.js) - Port 4000                   │
+│           BFF (Express.js) - Port 4000                  │
 │  ┌────────────────────────────────────────────────────┐ │
 │  │  CopilotRuntime                                    │ │
 │  │  - Proxies requests to Python backend              │ │
@@ -60,7 +59,7 @@ This project demonstrates a simple but powerful use case: **an AI agent that can
                   │ HTTP/SSE
                   ↓
 ┌─────────────────────────────────────────────────────────┐
-│          Backend (FastAPI/Python) - Port 8000            │
+│          Backend (FastAPI/Python) - Port 8000           │
 │  ┌────────────────────────────────────────────────────┐ │
 │  │  LangGraph Agent (chat_node)                       │ │
 │  │  1. Receives context (current state)               │ │
@@ -74,20 +73,26 @@ This project demonstrates a simple but powerful use case: **an AI agent that can
 
 ### The BFF Layer (Backend For Frontend)
 
-This project uses a **BFF pattern** with an Express.js proxy layer:
+This project uses a BFF pattern with an Express.js proxy layer:
 
 ```typescript
-// client/bff.ts - The BFF Proxy
-import { CopilotRuntime, LangGraphHttpAgent } from "@copilotkit/runtime";
+// client/server/index.ts — BFF (Express)
+import {
+  CopilotRuntime,
+  copilotRuntimeNodeHttpEndpoint,
+  ExperimentalEmptyAdapter,
+  LangGraphHttpAgent,
+} from "@copilotkit/runtime";
 import express from "express";
 
 const app = express();
+const serviceAdapter = new ExperimentalEmptyAdapter();
 
 app.use("/api/copilotkit", (req, res, next) => {
   const runtime = new CopilotRuntime({
     agents: {
       agent: new LangGraphHttpAgent({
-        url: "http://localhost:8000/api/copilotkit",  // ← Python backend
+        url: "http://localhost:8000/api/copilotkit", // Python backend
       }),
     },
   });
@@ -101,10 +106,14 @@ app.use("/api/copilotkit", (req, res, next) => {
   return handler(req, res, next);
 });
 
-app.listen(4000);  // BFF runs on port 4000
+const PORT = Number(process.env.BFF_PORT || 4000);
+app.listen(PORT, () => {
+  console.log(`BFF listening on http://localhost:${PORT}/api/copilotkit`);
+});
 ```
 
 **Architecture with BFF:**
+
 ```
 React Frontend (5173)
     ↓
@@ -113,80 +122,51 @@ Express BFF (4000)
 Python Backend (8000)
 ```
 
-**What the BFF does:**
-- 🔌 Acts as a proxy between frontend and Python backend
-- 🔄 Handles CopilotKit Runtime logic (message formatting, tool execution)
-- 📦 Converts between browser-friendly and LangGraph formats
-- ✅ Simplifies frontend code - no need to handle LangGraph details directly
+What the BFF does:
 
-**Why use a BFF?**
-- **Separation of concerns**: Frontend doesn't need to know about LangGraph internals
-- **Type safety**: TypeScript on both frontend and BFF
-- **Flexibility**: Can add middleware, logging, authentication, etc.
-- **CORS handling**: No CORS issues since BFF proxies requests
+- Acts as a proxy between frontend and Python backend
+- Handles CopilotKit Runtime logic (message formatting, tool execution)
+- Converts between browser-friendly and LangGraph formats
+- Simplifies frontend code — no need to handle LangGraph details directly
 
-## 🔑 Key Concepts
+Why use a BFF:
+
+- Separation of concerns: frontend does not depend on LangGraph internals
+- Type safety: TypeScript on both frontend and BFF
+- Flexibility: can add middleware, logging, authentication, etc.
+- CORS handling: avoids cross-origin issues by proxying requests
+
+## Key Concepts
 
 ### 1. **Frontend to Backend Flow**
 
 **Frontend (React):**
+
 ```typescript
 // Send current state to AI
 useCopilotReadable({
   description: "The current color of the square",
-  value: color  // "blue"
-})
+  value: color, // "blue"
+});
 
 // Define actions AI can call
 useCopilotAction({
   name: "setSquareColor",
   description: "Set the color of the square",
   parameters: [{ name: "color", type: "string" }],
-  handler: async ({ color }) => setColor(color)
-})
+  handler: async ({ color }) => setColor(color),
+});
 ```
 
 **Backend (Python):**
+
 ```python
 # Receives automatically from CopilotKit
 frontend_data = state["copilotkit"]["context"]     # Current state
 frontend_tools = state["copilotkit"]["actions"]    # Available actions
 ```
 
-### 2. **The State Synchronization Challenge**
-
-**Problem:** When users manually change the UI state (clicking buttons), the LLM might still answer based on its conversation memory instead of the actual current state.
-
-**Example of the bug:**
-```
-1. User: "Change to blue"
-2. AI calls setSquareColor("blue") ✅
-3. User clicks "Red" button manually 🔴
-4. User: "What's the color?"
-5. AI answers: "Blue" ❌ (using memory instead of current state)
-```
-
-**Solution:** Strong prompt engineering + real-time state injection
-
-```python
-system_message = SystemMessage(content=f"""
-===== CURRENT STATE (ALWAYS USE THIS) =====
-{current_state}  # "The current color of the square: red"
-============================================
-
-CRITICAL: The value above is the ONLY source of truth.
-Ignore any different colors mentioned in chat history.
-""")
-
-# ALSO inject at the end for maximum priority
-state_reminder = SystemMessage(
-  content=f"[REAL-TIME UPDATE] {current_state}"
-)
-
-messages = [system_message, *history, state_reminder]
-```
-
-### 3. **Tool Execution Flow**
+### 2. **Tool Execution Flow**
 
 CopilotKit automatically handles tool execution:
 
@@ -204,7 +184,7 @@ Backend: Receives tool result, AI confirms to user
 AI: "I've set the color to green"
 ```
 
-## 🚀 Setup
+## Setup
 
 ### Prerequisites
 
@@ -216,18 +196,21 @@ AI: "I've set the color to green"
 ### Installation
 
 1. **Clone the repository**
+
 ```bash
 git clone <repository-url>
 cd copilotkit
 ```
 
 2. **Frontend Setup**
+
 ```bash
 cd client
 npm install
 ```
 
 3. **Backend Setup**
+
 ```bash
 cd server
 uv sync  # Creates venv and installs dependencies from pyproject.toml
@@ -236,6 +219,7 @@ uv sync  # Creates venv and installs dependencies from pyproject.toml
 4. **Environment Variables**
 
 Create `server/.env`:
+
 ```env
 # Required
 OPENAI_API_KEY=your_openai_api_key_here
@@ -248,21 +232,58 @@ LANGCHAIN_PROJECT=copilotkit-square
 
 ### Running
 
-**Terminal 1 - Backend:**
-```bash
-cd server
-make server  # or: uv run python server.py
-```
+Option A — one command for web + BFF (recommended)
 
-**Terminal 2 - Frontend:**
 ```bash
 cd client
-npm run dev
+npm run dev:both   # starts BFF and Vite together
+```
+
+Note: ensure the Python backend is running before issuing requests through the BFF.
+
+Option B — separate terminals
+
+- Backend (Python):
+
+```bash
+cd server
+make start   # or: uv run python server.py
+```
+
+- Frontend (React) + BFF (Node):
+
+```bash
+cd client
+make start   # or: npm run bff & npm run dev
 ```
 
 Open http://localhost:5173
 
-## 📁 Project Structure
+Ports and environment
+
+- Frontend (Vite): `5173` (default)
+- BFF (Node/Express): `4000` (default, override with `BFF_PORT`)
+- Python LangGraph API: `8000` (default)
+
+Relevant environment variables
+
+```bash
+# Required
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Optional
+BFF_PORT=4000                      # overrides BFF listen port
+LANGCHAIN_TRACING_V2=true          # enable LangSmith tracing
+LANGCHAIN_API_KEY=your_langsmith_api_key_here
+LANGCHAIN_PROJECT=copilotkit-square
+```
+
+Notes:
+
+- Server-side variables (`OPENAI_API_KEY`, `LANGCHAIN_*`) are used by the Python backend. Place them in `server/.env`.
+- `BFF_PORT` affects the Node/Express BFF. It can be provided via shell env when running `npm run bff` or `npm run dev:both` from `client/`.
+
+## Project Structure
 
 ```
 copilotkit/
@@ -270,7 +291,8 @@ copilotkit/
 │   ├── src/
 │   │   ├── App.tsx           # Main component with CopilotKit hooks
 │   │   └── App.module.css    # Styles with CSS variables
-│   └── bff.ts                # BFF (Backend For Frontend) - Express proxy
+│   ├── server/
+│   │   └── index.ts          # BFF (Backend For Frontend) - Express proxy
 │
 ├── server/                    # Python backend
 │   ├── server.py             # FastAPI server exposing LangGraph
@@ -281,7 +303,7 @@ copilotkit/
 └── README.md                 # This file
 ```
 
-## 🔄 How It Works
+## How It Works
 
 ### Complete Message Flow
 
@@ -291,23 +313,26 @@ Let's trace what happens when a user asks: **"What is the square color?"**
 
 ```typescript
 // Current React state
-const [color, setColor] = useState("red")
+const [color, setColor] = useState("red");
 
 // Automatically sends to backend
 useCopilotReadable({
   description: "The current color of the square",
-  value: color  // ← "red"
-})
+  value: color, // ← "red"
+});
 ```
 
 CopilotKit sends to backend:
+
 ```json
 {
   "copilotkit": {
-    "context": [{
-      "description": "The current color of the square",
-      "value": "red"
-    }]
+    "context": [
+      {
+        "description": "The current color of the square",
+        "value": "red"
+      }
+    ]
   }
 }
 ```
@@ -345,6 +370,7 @@ response = await model.ainvoke(messages_to_send)
 ```
 
 GPT-4 receives:
+
 ```
 [SystemMessage] CURRENT STATE: red ...
 [HumanMessage] "Change to green"
@@ -356,6 +382,7 @@ GPT-4 receives:
 #### 4. GPT-4 Response
 
 Despite having said "green" in memory, GPT-4 sees:
+
 - Strong instruction: "Use ONLY current state"
 - Current state: "red"
 - Recent reminder: "red"
@@ -372,30 +399,33 @@ return Command(goto="__end__", update={"messages": response})
 
 CopilotSidebar shows: "The current color of the square is red"
 
-## 💻 Code Walkthrough
+## Code Walkthrough
 
 ### Frontend: `client/src/App.tsx`
 
 #### 1. State Management
+
 ```typescript
 function Chat() {
-  const [color, setColor] = useState("blue")
+  const [color, setColor] = useState("blue");
 
   // ... rest of component
 }
 ```
 
 #### 2. Readable State (Sends to AI)
+
 ```typescript
 useCopilotReadable({
   description: "The current color of the square",
-  value: color,  // AI always gets the current value
-})
+  value: color, // AI always gets the current value
+});
 ```
 
 **Key point:** This runs on every render, so AI always sees the latest state.
 
 #### 3. Action Definition (Tool for AI)
+
 ```typescript
 useCopilotAction({
   name: "setSquareColor",
@@ -408,17 +438,19 @@ useCopilotAction({
     },
   ],
   handler: async ({ color }) => {
-    setColor(color)  // Actually changes the state
+    setColor(color); // Actually changes the state
   },
-})
+});
 ```
 
 **Key point:** CopilotKit automatically:
+
 - Sends this tool definition to the backend
 - Executes the handler when AI calls it
 - Syncs the result back
 
 #### 4. UI Rendering
+
 ```typescript
 return (
   <>
@@ -426,8 +458,14 @@ return (
       defaultOpen
       instructions="You help users change and read the color..."
       suggestions={[
-        { title: "Change square color", message: "Choose a new random background color." },
-        { title: "What is the square color?", message: "What is the square color?" }
+        {
+          title: "Change square color",
+          message: "Choose a new random background color.",
+        },
+        {
+          title: "What is the square color?",
+          message: "What is the square color?",
+        },
       ]}
     />
 
@@ -441,12 +479,13 @@ return (
       </div>
     </div>
   </>
-)
+);
 ```
 
 ### Backend: `server/agent.py`
 
 #### 1. State Definition
+
 ```python
 from copilotkit import CopilotKitState
 
@@ -455,6 +494,7 @@ class AgentState(CopilotKitState):
 ```
 
 #### 2. Extract Frontend Data
+
 ```python
 async def chat_node(state: AgentState, config: RunnableConfig):
     # Get data sent from frontend
@@ -466,6 +506,7 @@ async def chat_node(state: AgentState, config: RunnableConfig):
 ```
 
 #### 3. Build Current State String
+
 ```python
     # Extract current values from frontend
     current_state = ""
@@ -477,6 +518,7 @@ async def chat_node(state: AgentState, config: RunnableConfig):
 ```
 
 #### 4. Create System Message with Current State
+
 ```python
     system_message = SystemMessage(content=f"""You help users change and read the color of a square.
 
@@ -495,21 +537,8 @@ RULES:
    even if the user requests the color in another language (e.g., "azul" → "blue")""")
 ```
 
-#### 5. Detect Tool Execution (Prevents Loops)
-```python
-    # Check if we just executed a tool
-    last_message = state["messages"][-1] if state.get("messages") else None
-    just_executed_tool = last_message and hasattr(last_message, 'type') and last_message.type == 'tool'
+#### 5. Inject Current State at End (Maximum Priority)
 
-    # Add instruction to respond instead of calling tool again
-    modified_system_content = system_message.content
-    if just_executed_tool:
-        modified_system_content += "\n\nIMPORTANT: A tool was just executed. Now respond to the user confirming the action. Do NOT call the tool again."
-```
-
-**Why this matters:** Without this, the AI might call `setSquareColor` repeatedly in a loop.
-
-#### 6. Inject Current State at End (Maximum Priority)
 ```python
     # Add state reminder at the end for highest priority
     state_reminder = SystemMessage(
@@ -524,15 +553,17 @@ RULES:
 ```
 
 **Why inject twice (start + end)?**
+
 - LLMs give more weight to recent messages
 - System message at start = general instructions
 - System message at end = "this is the truth RIGHT NOW"
 
-#### 7. Configure Model and Invoke
+#### 6. Configure Model and Invoke
+
 ```python
     model = ChatOpenAI(
         model="gpt-4o",
-        temperature=0,  # Deterministic for UI control
+        temperature=0.7,
     )
 
     # Bind frontend tools to the model
@@ -546,113 +577,19 @@ RULES:
 ```
 
 #### 8. Return Response
+
 ```python
     await copilotkit_emit_state(config, state)  # Sync to frontend
 
     return Command(goto="__end__", update={"messages": response})
 ```
 
-### Styling: `client/src/App.module.css`
-
-```css
-.container {
-  --square-size: 500px;  /* CSS variable for easy sizing */
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  gap: 20px;
-  margin-left: calc(-448px / 2);  /* Account for 448px sidebar */
-}
-
-.square {
-  width: var(--square-size);
-  height: var(--square-size);
-}
-```
-
-**Key design decision:** Using CSS Modules for proper encapsulation and CSS variables for maintainability.
-
-## 🎓 Key Learnings
-
-### 1. **State Synchronization is a Prompt Engineering Problem**
-
-The biggest challenge wasn't code - it was **making the AI trust the current state over its memory**.
-
-**Failed approach:**
-```python
-# Too weak
-system_message = "Use the current state"
-```
-
-**Working approach:**
-```python
-# Strong instructions + injection at multiple points
-system_message = """
-CRITICAL INSTRUCTION: The CURRENT REAL-TIME state is: {state}
-You MUST use ONLY this current state.
-IGNORE any previous values.
-"""
-# + inject again at the end of messages
-```
-
-### 2. **Tool Execution Loops**
-
-Without detection, AI can call the same tool repeatedly:
-
-```
-User: "choose a color"
-AI: calls setSquareColor("blue")
-[Tool executes]
-AI sees: "choose a color" (still in history)
-AI: calls setSquareColor("green")  ← Loop!
-```
-
-**Solution:** Detect when tool just executed and instruct AI to confirm instead:
-
-```python
-if just_executed_tool:
-    system_content += "A tool was just executed. Respond to confirm. Do NOT call again."
-```
-
-### 3. **Temperature Matters for UI Control**
-
-```python
-temperature=0   # ✅ Deterministic, precise for UI control
-temperature=0.7 # ❌ Creative but less reliable for actions
-```
-
-For chatbots: higher temperature is fine. For UI control: use 0.
-
-### 4. **Multilingual Support Through Prompting**
-
-No need for translation libraries:
-
-```python
-"Always use English HTML color names (e.g., 'red', 'blue', 'green')
-even if the user requests in another language (e.g., 'azul' → 'blue')"
-```
-
-GPT-4 handles translation automatically!
-
-### 5. **CopilotKit's Magic**
-
-CopilotKit handles automatically:
-- ✅ Tool call interception
-- ✅ Execution in the correct context (frontend)
-- ✅ State synchronization
-- ✅ SSE streaming for real-time updates
-- ✅ Memory management
-
-We just define hooks - CopilotKit does the rest.
-
 ## 🐛 Debugging
 
 ### Enable LangSmith Tracing
 
 Add to `server/.env`:
+
 ```env
 LANGCHAIN_TRACING_V2=true
 LANGCHAIN_API_KEY=your_langsmith_key
@@ -660,24 +597,11 @@ LANGCHAIN_PROJECT=copilotkit-square
 ```
 
 Visit https://smith.langchain.com to see:
+
 - Every message sent to/from GPT-4
 - Tool calls and responses
 - Timing and token usage
 - Exact state at each step
-
-### Common Issues
-
-**Issue:** AI doesn't see current state
-- ✅ Check: Is `useCopilotReadable` being called?
-- ✅ Check: Is `value` prop updating?
-- ✅ Verify in LangSmith: Does `frontend_data` have the correct value?
-
-**Issue:** AI calls tool repeatedly (loop)
-- ✅ Check: Is `just_executed_tool` detection working?
-- ✅ Verify: System message includes "Do NOT call again"
-
-**Issue:** AI answers in wrong language
-- ✅ Strengthen prompt: "ALWAYS answer in [language]"
 
 ## 📚 References
 
@@ -695,4 +619,4 @@ This is a study project for educational purposes.
 
 **Last updated:** 2025-10-18
 
-Built with ❤️ to understand CopilotKit + LangGraph integration
+Built with ❤️ to understand CopilotKit Open Source SDK + LangGraph integration

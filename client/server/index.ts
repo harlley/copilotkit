@@ -28,11 +28,13 @@ app.use("/api/copilotkit", (req, res, next) => {
   return handler(req, res, next);
 });
 
-app.listen(4000, () => {
+const PORT = Number(process.env.BFF_PORT || 4000);
+app.listen(PORT, () => {
   console.log(
-    "🚀 Copilot Runtime BFF listening at http://localhost:4000/api/copilotkit"
+    `🚀 Copilot Runtime BFF listening at http://localhost:${PORT}/api/copilotkit`
   );
   console.log(
     "🐍 Python LangGraph agent should be running at http://localhost:8000/api/copilotkit"
   );
 });
+

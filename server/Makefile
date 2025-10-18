@@ -1,7 +1,10 @@
-.PHONY: server lint lint-fix typecheck format check
+.PHONY: start server lint lint-fix typecheck format check
 
-server:
+# Backwards compatible: `make server` still works
+start:
 	uv run python server.py
+
+server: start
 
 # Run all linting checks (without fixing)
 lint:
