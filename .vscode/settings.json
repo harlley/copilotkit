@@ -1,0 +1,57 @@
+{
+  // Configurações Python específicas para a pasta server
+  "python.analysis.typeCheckingMode": "basic",
+
+  // Configurações alinhadas com pyproject.toml da pasta server
+  "python.analysis.diagnosticSeverityOverrides": {
+    // Reduzir severidade de problemas de bibliotecas sem type stubs
+    "reportMissingTypeStubs": "warning",
+    "reportUnknownParameterType": "warning",
+    "reportUnknownArgumentType": "warning",
+    "reportUnknownMemberType": "warning",
+    "reportUnknownVariableType": "warning",
+
+    // Manter como errors os problemas reais do código
+    "reportGeneralTypeIssues": "error",
+    "reportOptionalMemberAccess": "error",
+    "reportOptionalSubscript": "error",
+    "reportOptionalCall": "error",
+
+    // Desabilitar outras verificações menos importantes
+    "reportUntypedFunctionDecorator": "none",
+    "reportUntypedClassDecorator": "none",
+    "reportPrivateUsage": "none",
+    "reportConstantRedefinition": "none"
+  },
+
+  // Usar configuração do pyproject.toml quando disponível
+  "python.analysis.useLibraryCodeForTypes": true,
+
+  // Apontar para o ambiente virtual da pasta server
+  "python.defaultInterpreterPath": "${workspaceFolder}/server/.venv/bin/python",
+
+  // Configurações de formatação e lint para Python
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+
+  // Usar ruff como formatter para Python
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true
+  },
+
+  // Desabilitar outros linters/formatters antigos
+  "python.linting.enabled": false,
+  "python.formatting.provider": "none",
+
+  // Configurações gerais
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true,
+    "**/.ruff_cache": true
+  }
+}

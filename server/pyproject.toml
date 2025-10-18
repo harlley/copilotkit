@@ -16,3 +16,65 @@ dependencies = [
     "typing-extensions>=4.15.0",
     "uvicorn>=0.37.0",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8.0",
+    "pyright>=1.1.390",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
+    "TCH",    # flake8-type-checking
+    "RUF",    # ruff-specific rules
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["server"]
+
+[tool.pyright]
+include = ["*.py"]
+exclude = [
+    "**/__pycache__",
+    ".venv",
+]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+
+# Report missing imports and stubs as warnings (libraries without type stubs)
+reportMissingImports = true
+reportMissingTypeStubs = "warning"
+
+# Report unknown/partial types as warnings (common with untyped libraries)
+reportUnknownParameterType = "warning"
+reportUnknownArgumentType = "warning"
+reportUnknownMemberType = "warning"
+reportUnknownVariableType = "warning"
+
+# Keep these as errors (actual code issues)
+reportGeneralTypeIssues = "error"
+reportOptionalMemberAccess = "error"
+reportOptionalSubscript = "error"
+reportOptionalCall = "error"
+
+# Other settings
+reportUntypedFunctionDecorator = false
+reportUntypedClassDecorator = false
+reportPrivateUsage = false
+reportConstantRedefinition = false
