@@ -87,8 +87,7 @@ RULES:
 
     await copilotkit_emit_state(config, state)
 
-    # If response has tool_calls, return it and let CopilotKit handle tool execution
-    # CopilotKit will call us again after executing the tool
+    # Without backend tools we can finish the turn immediately; frontend tools run via CopilotKit.
     return Command(goto="__end__", update={"messages": response})
 
 
