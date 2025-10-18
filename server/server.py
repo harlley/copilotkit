@@ -1,8 +1,3 @@
-"""
-This serves the "agent" agent using CopilotKit's LangGraph integration.
-POC version - standalone Python server.
-"""
-
 import os
 
 import uvicorn
@@ -17,7 +12,6 @@ load_dotenv()  # Must be called after imports but before using env vars
 
 app = FastAPI()
 
-# Configure the agent endpoint
 add_langgraph_fastapi_endpoint(
     app=app,
     agent=LangGraphAGUIAgent(
@@ -29,7 +23,6 @@ add_langgraph_fastapi_endpoint(
 )
 
 
-# Add health check endpoint
 @app.get("/health")
 def health():
     """Health check."""
@@ -38,7 +31,7 @@ def health():
 
 def main():
     """Run the uvicorn server."""
-    port = int(os.getenv("PORT", 8000))  # Porta diferente para o BFF
+    port = int(os.getenv("PORT", 8000))
     print(f"🐍 Python LangGraph agent starting on port {port}")
     print(f"📡 Endpoint: http://localhost:{port}/api/copilotkit")
 

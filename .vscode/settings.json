@@ -28,7 +28,7 @@
   "python.analysis.useLibraryCodeForTypes": true,
 
   // Apontar para o ambiente virtual da pasta server
-  "python.defaultInterpreterPath": "${workspaceFolder}/server/.venv/bin/python",
+  "python.defaultInterpreterPath": "./server/.venv/bin/python",
 
   // Configurações de formatação e lint para Python
   "editor.formatOnSave": true,
@@ -38,7 +38,7 @@
 
   // Usar ruff como formatter para Python
   "[python]": {
-    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.defaultFormatter": "Anthropic.claude-code",
     "editor.formatOnSave": true
   },
 

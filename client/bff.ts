@@ -1,10 +1,10 @@
-import express from "express";
 import {
   CopilotRuntime,
-  ExperimentalEmptyAdapter,
   copilotRuntimeNodeHttpEndpoint,
+  ExperimentalEmptyAdapter,
   LangGraphHttpAgent,
 } from "@copilotkit/runtime";
+import express from "express";
 
 const app = express();
 
@@ -14,7 +14,7 @@ app.use("/api/copilotkit", (req, res, next) => {
   const runtime = new CopilotRuntime({
     agents: {
       agent: new LangGraphHttpAgent({
-        url: "http://localhost:8000/api/copilotkit", // seu servidor Python LangGraph
+        url: "http://localhost:8000/api/copilotkit",
       }),
     },
   });

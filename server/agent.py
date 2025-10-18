@@ -41,41 +41,33 @@ async def chat_node(state: AgentState, config: RunnableConfig) -> Command[Litera
         temperature=0.7,
     )
 
-    system_content = f"You are a helpful assistant. Talk in {state.get('language', 'english')}. "
+    # Build system message with emphasis on current state
+    system_content = "You are a helpful assistant.\n\n"
 
-    if frontend_tools:
-        tool_descriptions = []
-        for tool in frontend_tools:
-            name = tool.get("name", "unknown")
-            desc = tool.get("description", "No description")
-            tool_descriptions.append(f"- {name}: {desc}")
-
-        system_content += (
-            "\n\nYou have access to the following UI control tools:\n"
-            + "\n".join(tool_descriptions)
-            + "\n\nUse these tools proactively when the user asks to change or interact with the interface."
-        )
-
+    current_state = ""
     if frontend_data:
-        data_descriptions = []
         for data in frontend_data:
-            desc = getattr(data, "description", "unknown data")
-            value = getattr(data, "value", "N/A")
-            data_descriptions.append(f"- {desc}: {value}")
+            value = data.get("value") if isinstance(data, dict) else getattr(data, "value", None)
+            desc = (
+                data.get("description")
+                if isinstance(data, dict)
+                else getattr(data, "description", "")
+            )
+            if value:
+                current_state += f"{desc}: {value}\n"
 
+    if current_state:
         system_content += (
-            "\n\nCurrent frontend state:\n"
-            + "\n".join(data_descriptions)
-            + "\n\nUse this information to answer questions about the current state of the interface."
+            f"CRITICAL INSTRUCTION: The CURRENT REAL-TIME state is:\n{current_state}\n"
+            "You MUST use ONLY this current state when answering questions about the interface. "
+            "IGNORE any previous color values mentioned earlier in the conversation. "
+            "The state shown above is the ONLY truth. Always answer based on this current state."
         )
 
     system_message = SystemMessage(content=system_content)
 
     if all_tools:
-        model_with_tools = model.bind_tools(
-            all_tools,
-            parallel_tool_calls=False,
-        )
+        model_with_tools = model.bind_tools(all_tools, parallel_tool_calls=False)
     else:
         model_with_tools = model
 

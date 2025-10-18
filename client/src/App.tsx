@@ -1,10 +1,10 @@
-import "@copilotkit/react-ui/styles.css";
 import {
   CopilotKit,
-  useFrontendTool,
   useCopilotReadable,
+  useCopilotAction,
 } from "@copilotkit/react-core";
 import { CopilotChat } from "@copilotkit/react-ui";
+import "@copilotkit/react-ui/styles.css";
 import { useState } from "react";
 
 function Square({ color = "blue" }) {
@@ -17,11 +17,11 @@ function YourComponent() {
   const [color, setColor] = useState("blue");
 
   useCopilotReadable({
-    description: "Current color of the square (currently: " + color + ")",
-    value: { currentSquareColor: color },
+    description: "The current color of the square",
+    value: color,
   });
 
-  useFrontendTool({
+  useCopilotAction({
     name: "setSquareColor",
     description: "Set the color of the square",
     parameters: [
@@ -29,10 +29,9 @@ function YourComponent() {
         name: "color",
         type: "string",
         description: "The new color for the square",
-        required: true,
       },
     ],
-    handler: ({ color }) => {
+    handler: async ({ color }) => {
       setColor(color);
     },
   });
@@ -50,16 +49,23 @@ function YourComponent() {
         suggestions={[
           {
             title: "Change background",
-            message: "Change the background to something new.",
+            message: "Choose a new random background color.",
           },
           {
-            title: "Qual a cor do quadrado?",
-            message: "Qual a cor do quadrado?",
+            title: "What is the square color?",
+            message: "What is the square color?",
           },
         ]}
       />
       <Square color={color} />
-      <button onClick={() => setColor("red")}>Red</button>
+      <div style={{ marginTop: "20px", display: "flex", gap: "10px", alignItems: "center" }}>
+        <button onClick={() => setColor("red")}>Red</button>
+        <button onClick={() => setColor("blue")}>Blue</button>
+        <button onClick={() => setColor("green")}>Green</button>
+        <div style={{ marginLeft: "20px", fontWeight: "bold" }}>
+          Current color: {color}
+        </div>
+      </div>
     </>
   );
 }
