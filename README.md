@@ -188,12 +188,19 @@ AI: "I've set the color to green"
 
 ### Prerequisites
 
-- Node.js 18+
-- Python 3.11+
-- OpenAI API key
-- (Optional) LangSmith API key for debugging
+- **Option 1: Docker** (Recommended for quick start)
+  - Docker and Docker Compose
+  - OpenAI API key
 
-### Installation
+- **Option 2: Local Development**
+  - Node.js 18+
+  - Python 3.11+
+  - OpenAI API key
+  - (Optional) LangSmith API key for debugging
+
+### Quick Start with Docker
+
+The easiest way to run all three services (Frontend, BFF, Backend) is using Docker:
 
 1. **Clone the repository**
 
@@ -202,23 +209,75 @@ git clone <repository-url>
 cd copilotkit
 ```
 
-2. **Frontend Setup**
+2. **Configure environment variables**
 
 ```bash
-cd client
-npm install
+cp .env.example .env
+# Edit .env and add your OPENAI_API_KEY
 ```
 
-3. **Backend Setup**
+3. **Build and run with Docker**
 
 ```bash
-cd server
-uv sync  # Creates venv and installs dependencies from pyproject.toml
+# Build the Docker image
+make docker-build
+
+# Run the container
+make docker-run
 ```
 
-4. **Environment Variables**
+4. **Access the application**
 
-Create `server/.env`:
+Open http://localhost:5173 in your browser.
+
+**Docker ports:**
+- Frontend: http://localhost:5173
+- BFF API: http://localhost:4000/api/copilotkit
+- Backend API: http://localhost:8000/api/copilotkit
+- Backend Health: http://localhost:8000/health
+
+**Useful commands:**
+
+```bash
+# View logs
+docker logs -f copilotkit-demo
+
+# Stop the container
+make docker-stop
+
+# Rebuild after changes
+make docker-build && make docker-run
+```
+
+### Local Development Setup
+
+For local development with auto-reload:
+
+1. **Clone the repository**
+
+```bash
+git clone <repository-url>
+cd copilotkit
+```
+
+2. **Install all dependencies**
+
+```bash
+make install
+```
+
+This will:
+- Install Node.js dependencies for frontend and BFF
+- Install Python dependencies using `uv`
+
+3. **Configure environment variables**
+
+```bash
+cp .env.example .env
+# Edit .env and add your OPENAI_API_KEY
+```
+
+Or create `server/.env` with:
 
 ```env
 # Required
@@ -230,58 +289,81 @@ LANGCHAIN_API_KEY=your_langsmith_api_key_here
 LANGCHAIN_PROJECT=copilotkit-square
 ```
 
-### Running
-
-Option A — one command for web + BFF (recommended)
+4. **Run all services**
 
 ```bash
-cd client
-npm run dev:both   # starts BFF and Vite together
+make start
 ```
 
-Note: ensure the Python backend is running before issuing requests through the BFF.
+This starts:
+- Python Backend (FastAPI) on port 8000
+- BFF (Express) on port 4000
+- Frontend (Vite) on port 5173
 
-Option B — separate terminals
+Open http://localhost:5173
 
-- Backend (Python):
+### Alternative Running Methods
 
+**Option A — Root Makefile (recommended)**
+
+```bash
+make start  # Starts all 3 services from root
+```
+
+**Option B — Separate terminals**
+
+Terminal 1 - Backend (Python):
 ```bash
 cd server
 make start   # or: uv run python server.py
 ```
 
-- Frontend (React) + BFF (Node):
-
+Terminal 2 - Frontend + BFF:
 ```bash
 cd client
-make start   # or: npm run bff & npm run dev
+npm run dev:both   # starts BFF and Vite together
 ```
 
-Open http://localhost:5173
-
-Ports and environment
-
-- Frontend (Vite): `5173` (default)
-- BFF (Node/Express): `4000` (default, override with `BFF_PORT`)
-- Python LangGraph API: `8000` (default)
-
-Relevant environment variables
+**Option C — Individual services**
 
 ```bash
-# Required
-OPENAI_API_KEY=your_openai_api_key_here
+# Backend
+cd server && make start
 
-# Optional
-BFF_PORT=4000                      # overrides BFF listen port
-LANGCHAIN_TRACING_V2=true          # enable LangSmith tracing
-LANGCHAIN_API_KEY=your_langsmith_api_key_here
-LANGCHAIN_PROJECT=copilotkit-square
+# BFF
+cd client && npm run bff
+
+# Frontend
+cd client && npm run dev
 ```
 
-Notes:
+### Ports and Environment Variables
 
-- Server-side variables (`OPENAI_API_KEY`, `LANGCHAIN_*`) are used by the Python backend. Place them in `server/.env`.
-- `BFF_PORT` affects the Node/Express BFF. It can be provided via shell env when running `npm run bff` or `npm run dev:both` from `client/`.
+**Service Ports:**
+
+| Service | Port | Override Variable |
+|---------|------|-------------------|
+| Frontend (Vite) | 5173 | N/A |
+| BFF (Express) | 4000 | `BFF_PORT` |
+| Backend (FastAPI) | 8000 | `PORT` |
+
+**Environment Variables:**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `OPENAI_API_KEY` | **Yes** | - | OpenAI API key for GPT-4 access |
+| `BFF_PORT` | No | 4000 | Express server port |
+| `PORT` | No | 8000 | FastAPI server port |
+| `LANGCHAIN_TRACING_V2` | No | false | Enable LangSmith tracing |
+| `LANGCHAIN_API_KEY` | No | - | LangSmith API key (for debugging) |
+| `LANGCHAIN_PROJECT` | No | - | LangSmith project name |
+
+**Notes:**
+
+- For local development: Place variables in `server/.env` or export them in your shell
+- For Docker: Place all variables in root `.env` file (used by Docker)
+- `OPENAI_API_KEY` is required for the application to work
+- LangSmith variables are optional and used for debugging/monitoring
 
 ## Project Structure
 
@@ -293,14 +375,23 @@ copilotkit/
 │   │   └── App.module.css    # Styles with CSS variables
 │   ├── server/
 │   │   └── index.ts          # BFF (Backend For Frontend) - Express proxy
+│   ├── package.json          # Node.js dependencies
+│   └── Makefile              # Build scripts for client
 │
 ├── server/                    # Python backend
 │   ├── server.py             # FastAPI server exposing LangGraph
 │   ├── agent.py              # LangGraph agent implementation
-│   ├── .env                  # Environment variables
-│   └── AGENT_EXPLANATION.md  # Detailed technical explanation
+│   ├── pyproject.toml        # Python dependencies
+│   ├── .env                  # Environment variables (create from .env.example)
+│   ├── .env.example          # Example environment variables
+│   └── Makefile              # Build scripts for server
 │
-└── README.md                 # This file
+├── Dockerfile                 # Multi-service Docker image
+├── docker-entrypoint.sh       # Docker startup script for all services
+├── .dockerignore              # Docker build exclusions
+├── Makefile                   # Root Makefile - run all services
+├── .env.example               # Environment variables template
+└── README.md                  # This file
 ```
 
 ## How It Works

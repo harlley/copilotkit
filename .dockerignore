@@ -1,0 +1,57 @@
+# Node.js
+node_modules
+npm-debug.log
+yarn-error.log
+.npm
+.yarn
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv/
+ENV/
+env/
+.uv
+
+# Development
+.git
+.gitignore
+*.md
+!README.md
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs (we rebuild in Docker)
+client/dist
+client/node_modules
+server/.venv
+server/__pycache__
+
+# Logs
+*.log
+logs
+
+# Test coverage
+coverage
+.nyc_output
+
+# Misc
+.cache
+.temp
+tmp
