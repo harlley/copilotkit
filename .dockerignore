@@ -1,0 +1,19 @@
+# Git metadata
+.git
+.gitignore
+
+# Node artifacts
+client/node_modules
+client/.pnpm-store
+client/dist
+client/.turbo
+client/.cache
+
+# Python artifacts
+server/.venv
+__pycache__
+*.pyc
+
+# Editor/OS files
+.DS_Store
+Thumbs.db
