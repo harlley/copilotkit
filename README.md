@@ -259,6 +259,14 @@ make start   # or: npm run bff & npm run dev
 
 Open http://localhost:5173
 
+Option C — one command from the repo root
+
+```bash
+make start  # runs frontend, BFF, and Python backend together
+```
+
+The `scripts/start-services.sh` helper ensures each service is started in the right order and shuts everything down when you stop the command.
+
 Ports and environment
 
 - Frontend (Vite): `5173` (default)
@@ -273,6 +281,8 @@ OPENAI_API_KEY=your_openai_api_key_here
 
 # Optional
 BFF_PORT=4000                      # overrides BFF listen port
+FRONTEND_PORT=5173                 # overrides the Vite dev server port
+PORT=8000                          # overrides the Python FastAPI/uvicorn port
 LANGCHAIN_TRACING_V2=true          # enable LangSmith tracing
 LANGCHAIN_API_KEY=your_langsmith_api_key_here
 LANGCHAIN_PROJECT=copilotkit-square
@@ -281,7 +291,28 @@ LANGCHAIN_PROJECT=copilotkit-square
 Notes:
 
 - Server-side variables (`OPENAI_API_KEY`, `LANGCHAIN_*`) are used by the Python backend. Place them in `server/.env`.
-- `BFF_PORT` affects the Node/Express BFF. It can be provided via shell env when running `npm run bff` or `npm run dev:both` from `client/`.
+- `BFF_PORT` affects the Node/Express BFF. It can be provided via shell env when running `npm run bff`, `npm run dev:both`, or the root-level `make start`.
+- `FRONTEND_PORT` and `PORT` let you change the exposed Vite and FastAPI ports respectively when using the new helpers.
+
+### Docker (all services in one container)
+
+You can now run the entire stack from a single Docker image. This is useful for demos or deploying everything together.
+
+```bash
+docker build -t copilotkit-stack .
+
+# OPENAI_API_KEY is required at runtime. The LANGCHAIN_* values are optional.
+docker run --rm \
+  -e OPENAI_API_KEY="your-openai-api-key" \
+  -e LANGCHAIN_API_KEY="optional-langsmith-key" \
+  -e LANGCHAIN_PROJECT="copilotkit-square" \
+  -p 5173:5173 -p 4000:4000 -p 8000:8000 \
+  copilotkit-stack
+```
+
+To override the default ports, set `FRONTEND_PORT`, `BFF_PORT`, and/or `PORT` either when building or running the container. These values are respected by the startup script (`scripts/start-services.sh`) used by both the Docker entrypoint and the root `Makefile`.
+
+> 💡 Tip: The root `Makefile` exposes `make docker-build` and `make docker-run` shortcuts. Ensure `OPENAI_API_KEY` is exported before using `make docker-run`.
 
 ## Project Structure
 
